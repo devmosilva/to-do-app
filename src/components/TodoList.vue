@@ -1,61 +1,124 @@
 <template>
         <div class="add">
-              <label for='taskx'></label>
-              <input placeholder="Escreva aqui sua nota"  class="input-task" name='taskx' type="text" v-model="task">
+              <label for='message'></label>
+              <input placeholder="Escreva aqui sua nota"  class="input-task" name='message' type="text" v-model="message">
               <Button text="Adicionar" @click="addToDo()" class="btn-add" />
         </div>
-
-        <div  v-for='item in toDos' v-bind:key='item.id' class="content" >
+        <h4 v-show="toDos.length >= 1"> A Fazer: </h4>
+        <div v-show="!item.status" v-for='item in toDos' v-bind:key='item.id' class="content" >
           <label >
-              <input class="checkbox-todo" :value="item.status"  type="checkbox" @change='doneTodo($event ,item)' > 
+              <input class="checkbox-todo" :value="item.status"  :checked="item.status" type="checkbox" @change='doneTodo($event ,item)' > 
+          </label>
+             <label >
+              <input id='input-todo' disabled="!editTodo" :class="{'input-todo': true, 'todo-done' : item.status == true ? true : '' }" type="text" :value="item.message" > 
+          </label>
+              <Button text="Deletar" @click="removeTodo(item)" class="btn-remove" />
+        </div>
+        <h4 v-show="toDos.length >= 1"> Completas: </h4>
+
+      <div  v-show="item.status" v-for='item in toDos' v-bind:key='item.id' class="content" >
+          <label >
+              <input class="checkbox-todo" :value="item.status"  :checked="item.status" type="checkbox" @change='doneTodo($event ,item)' > 
           </label>
           
              <label >
-              <input id='input-todo' disabled="!editTodo" :class="{'input-todo': true, 'todo-done' : item.status == true ? true : '' }" type="text" :value="item.value" > 
+              <input id='input-todo' disabled="true" :class="{'input-todo': true, 'todo-done' : item.status == true ? true : '' }" type="text" :value="item.message" > 
           </label>
               <Button text="Deletar" @click="removeTodo(item)" class="btn-remove" />
-          
         </div>
 </template>
 
 <script  lang="ts">
 import Button from "./Button.vue"
+import axios from 'axios'
+import FethApi from '@/services/api';
 
   export default {
     components: {Button},
     data () {
       return {
-        task: '',
+        message: '',
         toDos: [],
       }
     },
+    created(){
+     this.getTodos();
+   },
     methods: {
+      async getTodos(){
+        //   await axios.get('http://127.0.0.1:8000/api/todo/index').then((response) => {
+        //     console.log(response)
+        //     this.toDos = response;
+        //  });
+          fetch( 'http://127.0.0.1:8000/api/todo/index', {
+              method: 'GET',
+              header: {
+                'Accept': 'application/json',
+                "Access-Control-Allow-Origin": "*"
+              }
+          } )
+          .then(response=>response.json())
+          .then(data=>{ this.toDos = data; });
+         
+      },
       async addToDo(){
-        if(this.task == ''){
+        
+        if(this.message == ''){
             this.$toast.error(`Campo não pode ser vazio !`);
             return false
         }
+
         const newTodo = {
-          id: Math.floor(Math.random() * 100),
-          value: this.task,
-          status: false 
+          message: this.message,
+          status: false
         }
 
-        this.task = '';
-        this.toDos.push(newTodo)
+        try {
+          const response = await axios.post('http://127.0.0.1:8000/api/todo/create', newTodo);
+          this.toDos.push({
+            id: response.data.id, 
+            message: response.data.message,
+            status: response.data.status
+           });
+
+          this.message = '';
+          this.$toast.success(`Adicionado com sucesso !`);
+          
+        } catch(erro) {
+            this.$toast.error(`Erro ao executar função !`);
+        }
+
         
-        localStorage.setItem('todos', JSON.stringify(this.toDos));
+        // localStorage.setItem('todos', JSON.stringify(this.toDos));
 
-        this.$toast.success(`Adicionado com sucesso !`);
 
       },
-      removeTodo(item){
-        this.$toast.error(`Removido com sucesso !`);
-        this.toDos = this.toDos.filter(todo => todo !== item)
+      async removeTodo(item){
+        try {
+          await axios.delete(`http://127.0.0.1:8000/api/todo/delete/${item.id}`);
+
+          this.toDos = this.toDos.filter(todo => todo !== item);
+          this.$toast.success(`Removido com sucesso !`);
+
+
+        } catch (error) {
+            this.$toast.error(`Erro ao executar função !`);
+        }
+
+    
       },
-      doneTodo(ev,item){
+      async doneTodo(ev,item){
+
+        try {
+          await axios.put(`http://127.0.0.1:8000/api/todo/updateStatus/${item.id}`);
+
+        } catch(err){
+
+            this.$toast.error(`Erro ao executar função !`);
+          
+        }
         item.status = !item.status;
-        localStorage.setItem('todos', JSON.stringify(this.toDos));
+        // localStorage.setItem('todos', JSON.stringify(this.toDos));
       }
     },
     mounted() {
@@ -64,11 +127,12 @@ import Button from "./Button.vue"
         }
     },
     watch: {
-      deep: true,
-      immediate: true,
-      toDos(newToDo){
-        localStorage.setItem('todos', JSON.stringify(newToDo));
-      },
+      toDos: {
+        handler(newToDo) {
+          // localStorage.setItem('todos', JSON.stringify(newToDo));
+        },
+        deep: true
+      }
     }
   }
 </script>
@@ -89,6 +153,9 @@ import Button from "./Button.vue"
     margin-bottom: 10px;
   }
 
+  .todo-done-green {
+    border-color: green;
+  }
 .add {
   display: flex;
   align-items: center;
@@ -98,10 +165,8 @@ import Button from "./Button.vue"
 
 .input-task {
   margin-right: 10px;
-  border-color: blue;
   border-radius: 6px;
   padding: 8px;
-
 }
 
 .input-todo {
