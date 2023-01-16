@@ -2,9 +2,9 @@
 
 Desenvolvimento de um To-do-list
 
--criação
--deleção
--armazenamento no storage.
++ Criar uma tarefa
++ Deletar uma tarefa
++ Armazenar as tarefas no storage.
 
 ## Customize configuration
 
