@@ -4,27 +4,30 @@
               <input placeholder="Escreva aqui sua nota"  class="input-task" name='message' type="text" v-model="message">
               <Button text="Adicionar" @click="addToDo()" class="btn-add" />
         </div>
+
         <h4 v-show="toDos.length >= 1"> A Fazer: </h4>
+
         <div v-show="!item.status" v-for='item in toDos' v-bind:key='item.id' class="content" >
           <label >
               <input class="checkbox-todo" :value="item.status"  :checked="item.status" type="checkbox" @change='doneTodo($event ,item)' > 
           </label>
-             <label >
+          <label >
               <input id='input-todo' disabled="!editTodo" :class="{'input-todo': true, 'todo-done' : item.status == true ? true : '' }" type="text" :value="item.message" > 
           </label>
               <Button text="Deletar" @click="removeTodo(item)" class="btn-remove" />
         </div>
+
         <h4 v-show="toDos.length >= 1"> Completas: </h4>
 
-      <div  v-show="item.status" v-for='item in toDos' v-bind:key='item.id' class="content" >
-          <label >
-              <input class="checkbox-todo" :value="item.status"  :checked="item.status" type="checkbox" @change='doneTodo($event ,item)' > 
-          </label>
-          
-             <label >
-              <input id='input-todo' disabled="true" :class="{'input-todo': true, 'todo-done' : item.status == true ? true : '' }" type="text" :value="item.message" > 
-          </label>
-              <Button text="Deletar" @click="removeTodo(item)" class="btn-remove" />
+        <div  v-show="item.status" v-for='item in toDos' v-bind:key='item.id' class="content" >
+            <label >
+                <input class="checkbox-todo" :value="item.status"  :checked="item.status" type="checkbox" @change='doneTodo($event ,item)' > 
+            </label>
+            
+              <label >
+                <input id='input-todo' disabled="true" :class="{'input-todo': true, 'todo-done' : item.status == true ? true : '' }" type="text" :value="item.message" > 
+            </label>
+                <Button text="Deletar" @click="removeTodo(item)" class="btn-remove" />
         </div>
 </template>
 
